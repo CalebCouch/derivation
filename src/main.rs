@@ -10,13 +10,12 @@ fn main() {
     let master_x = Xpriv::new_master(bitcoin::Network::Bitcoin, &master.secret_bytes()).unwrap();
     let public_x = Xpub::from_priv(&ctx, &master_x);
 
-    let protocol = public_x.derive_pub(&ctx, &[ChildNumber::from_normal_idx(1).unwrap()]).unwrap();
+    let public_0 = public_x.derive_pub(&ctx, &[ChildNumber::from_normal_idx(1).unwrap()]).unwrap();
+    let public_c = public.combine(&public_0.public_key).unwrap();
 
-    let actor_pub = public.combine(&protocol.public_key).unwrap();
+    let secret_0 = master_x.derive_priv(&ctx, &[ChildNumber::from_normal_idx(1).unwrap()]).unwrap();
+    let secret_c = master.add_tweak(&Scalar::from_be_bytes(*secret_0.private_key.as_ref()).unwrap()).unwrap();
 
-    let actor_priv = master.add_tweak(&Scalar::from_be_bytes(
-        *master_x.derive_priv(&ctx, &[ChildNumber::from_normal_idx(1).unwrap()]).unwrap().private_key.as_ref()
-    ).unwrap()).unwrap();
-
-    assert!(actor_pub == actor_priv.public_key(&ctx));
+    assert!(public_c == secret_c.public_key(&ctx));
+    //Given secret_c and public_x, Can master, master_x or secret_0 be discovered???
 }
